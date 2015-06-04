@@ -4,6 +4,35 @@
   int yyparse(void);
   extern int yylineno;
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char* indentation_mark = "    ";
+
+char* add(char* s1,char* s2){
+  int len = strlen(s1) + strlen(s2) + 1;
+  char *buf = (char*)malloc(len);
+  
+  strcat(buf,s1); 
+  strcat(buf,s2);
+  return buf;
+}
+
+char* add3(char* s1,char* s2,char* s3){
+  return add(s1,add(s2,s3));
+}
+
+char* add4(char* s1,char* s2,char* s3,char *s4){
+  return add3(s1,s2,add(s3,s4));
+}
+
+char* make_indent(char* statement,int num){
+  while(num--)statement = add(indentation_mark,statement);
+  return statement;
+}
+
+int iLevel = 1;
+
 %}
 %union
 {
@@ -24,149 +53,169 @@
 %token CONST_INT CONST_LONG_INT CONST_UNSIGNED CONST_UNSIGNED_LONG_INT CONST_DOUBLE CONST_FLOAT CONST_LONG_DOUBLE CONST_STRING CONST_CHAR
 
 %token IDENT TYPE_NAME
+//Own
+%token INCLUDE_STATEMENT
 
+%type<text> IDENT PrimaryExpr PostfixExpr UnaryExpr ArgumentExprList Input CastExpr AssignmentExpr MultiplicativeExpr AdditiveExpr CompoundStatement
+ShiftExpr RelationalExpr EqualityExpr AndExpr ExclusiveOrExpr InclusiveOrExpr LogicalOrExpr LogicalAndExpr ConditionalExpr Expr Statement ExpressionStatement StatementList DeclarationList
+Declarator Declarator2 Declaration DeclarationSpecifiers InitDeclarator IdentifierList FunctionDefinition FunctionBody TypeSpecifier TYPE_NAME StorageClassSpecifier
+OP_PTR OP_INC OP_DEC KWD_sizeof OP_GE TypeName UnaryOperator OP_LE OP_NE OP_SHL OP_SHR OP_SHL_ASSIGN OP_SHR_ASSIGN OP_EQ OP_AND OP_OR AssignmentOperator InitDeclaratorList
+Pointer TypeSpecifierList ParameterIdentifierList ParameterTypeList ParameterDeclaration AbstractDeclarator2 AbstractDeclarator ParameterList Initializer ConstantExpr OP_ELIPSIS
+InitializerList IterationStatement
 %%
 
+
+
 Program
-  :  Input {printf("public class DefaultClass\n{\n    public static void main(String[] args)\n    {\n    }\n}");} 
+  :  Includes Input {printf("public class DefaultClass\n{\n    %s}",$2);} 
+  ;
+
+Includes
+  : INCLUDE_STATEMENT
+  | Includes INCLUDE_STATEMENT
+  | 
   ;
 
 Input
-  : ExternalDefinition
-  | Input ExternalDefinition
+  : ExternalDefinition 
+  | Input ExternalDefinition 
   ;
 PrimaryExpr
-  : IDENT
+  : IDENT  {   
+      if(!strcmp("puts",$1)) 
+        $$ = "System.out.println"; 
+      else $$ = $1; 
+    }
   | Constant
   | '(' Expr ')'
   ;
 PostfixExpr
-  : PrimaryExpr
-  | PostfixExpr '[' Expr ']'
-  | PostfixExpr '(' ')'
-  | PostfixExpr '(' ArgumentExprList ')'
-  | PostfixExpr '.' IDENT
-  | PostfixExpr OP_PTR IDENT
-  | PostfixExpr OP_INC
-  | PostfixExpr OP_DEC
+  : PrimaryExpr 
+  | PostfixExpr '[' Expr ']'                { $$ = add4($1,"[",$3,"]");}
+  | PostfixExpr '(' ')'                     { $$ = add($1,"()");}
+  | PostfixExpr '(' ArgumentExprList ')'    { $$ = add4($1,"(",$3,")");}
+  | PostfixExpr '.' IDENT                   { $$ = add3($1,".",$3);}
+  | PostfixExpr OP_PTR IDENT                { $$ = add3($1,$2,$3);}
+  | PostfixExpr OP_INC                      { $$ = add3("$",$1,"++");}
+  | PostfixExpr OP_DEC                      { $$ = add3("$",$1,"--");}
   ;
 ArgumentExprList
-  : AssignmentExpr
-  | ArgumentExprList ',' AssignmentExpr
+  : AssignmentExpr                          
+  | ArgumentExprList ',' AssignmentExpr     { $$ = add3($1,",",$3);}
   ;
 UnaryExpr
   : PostfixExpr
-  | OP_INC UnaryExpr
-  | OP_DEC UnaryExpr
-  | UnaryOperator CastExpr
-  | KWD_sizeof UnaryExpr
-  | KWD_sizeof '(' TypeName ')'
+  | OP_INC UnaryExpr                        { $$ = add("++",$2);}
+  | OP_DEC UnaryExpr                        { $$ = add("--",$2);}
+  | UnaryOperator CastExpr                  { $$ = add($1,$2);}
+  | KWD_sizeof UnaryExpr                    { $$ = add($1,$2);}
+  | KWD_sizeof '(' TypeName ')'             { $$ = add4($1,"(",$3,")");}
   ;
 UnaryOperator
-  : '&'
-  | '*'
-  | '+'
-  | '-'
-  | '~'
-  | '!'
+  : '&'                                     { $$ = "&";}
+  | '*'                                     { $$ = "*";}
+  | '+'                                     { $$ = "+";}
+  | '-'                                     { $$ = "-";}
+  | '~'                                     { $$ = "~";}
+  | '!'                                     { $$ = "!";}
   ;
 CastExpr
-  : UnaryExpr
-  | '(' TypeName ')' CastExpr
+  : UnaryExpr                               
+  | '(' TypeName ')' CastExpr               { $$ = add4("(",$2,")",$4);}
   ;
 MultiplicativeExpr
   : CastExpr
-  | MultiplicativeExpr '*' CastExpr
-  | MultiplicativeExpr '/' CastExpr
-  | MultiplicativeExpr '%' CastExpr
+  | MultiplicativeExpr '*' CastExpr         { $$ = add3($1," * ",$3);}
+  | MultiplicativeExpr '/' CastExpr         { $$ = add3($1," / ",$3);}
+  | MultiplicativeExpr '%' CastExpr         { $$ = add3($1," % ",$3);}
   ;
 AdditiveExpr
   : MultiplicativeExpr
-  | AdditiveExpr '+' MultiplicativeExpr
-  | AdditiveExpr '-' MultiplicativeExpr
+  | AdditiveExpr '+' MultiplicativeExpr     { $$ = add3($1," + ",$3);}
+  | AdditiveExpr '-' MultiplicativeExpr     { $$ = add3($1," - ",$3);}
   ;
 ShiftExpr
   : AdditiveExpr
-  | ShiftExpr OP_SHL AdditiveExpr
-  | ShiftExpr OP_SHR AdditiveExpr
+  | ShiftExpr OP_SHL AdditiveExpr           { $$ = add3($1,$2,$3);}
+  | ShiftExpr OP_SHR AdditiveExpr           { $$ = add3($1,$2,$3);}
   ;
 RelationalExpr
   : ShiftExpr
-  | RelationalExpr '<' ShiftExpr
-  | RelationalExpr '>' ShiftExpr
-  | RelationalExpr OP_LE ShiftExpr
-  | RelationalExpr OP_GE ShiftExpr
+  | RelationalExpr '<' ShiftExpr            { $$ = add3($1," < ",$3);}
+  | RelationalExpr '>' ShiftExpr            { $$ = add3($1," > ",$3);}
+  | RelationalExpr OP_LE ShiftExpr          { $$ = add3($1," <= ",$3);}
+  | RelationalExpr OP_GE ShiftExpr          { $$ = add3($1," >= ",$3);}
   ;
 EqualityExpr
   : RelationalExpr
-  | EqualityExpr OP_EQ RelationalExpr
-  | EqualityExpr OP_NE RelationalExpr
+  | EqualityExpr OP_EQ RelationalExpr       { $$ = add3($1,$2,$3);}
+  | EqualityExpr OP_NE RelationalExpr       { $$ = add3($1,$2,$3);}
   ;
 AndExpr
   : EqualityExpr
-  | AndExpr '&' EqualityExpr
+  | AndExpr '&' EqualityExpr                { $$ = add3($1," & ",$3);}
   ;
 ExclusiveOrExpr
   : AndExpr
-  | ExclusiveOrExpr '^' AndExpr
+  | ExclusiveOrExpr '^' AndExpr             { $$ = add3($1," ^ ",$3);}
   ;
 InclusiveOrExpr
   : ExclusiveOrExpr
-  | InclusiveOrExpr '|' ExclusiveOrExpr
+  | InclusiveOrExpr '|' ExclusiveOrExpr     { $$ = add3($1," | ",$3);}
   ;
 LogicalAndExpr
   : InclusiveOrExpr
-  | LogicalAndExpr OP_AND InclusiveOrExpr
+  | LogicalAndExpr OP_AND InclusiveOrExpr   { $$ = add3($1,$2,$3);}
   ;
 LogicalOrExpr
-  : LogicalAndExpr
-  | LogicalOrExpr OP_OR LogicalAndExpr
+  : LogicalAndExpr 
+  | LogicalOrExpr OP_OR LogicalAndExpr      { $$ = add3($1,$2,$3);}
   ;
 ConditionalExpr
-  : LogicalOrExpr
-  | LogicalOrExpr '?' LogicalOrExpr ':' ConditionalExpr
+  : LogicalOrExpr 
+  | LogicalOrExpr '?' LogicalOrExpr ':' ConditionalExpr   { $$ = add4($1," ? ",$3,add(" : ",$5));}
   ;
 AssignmentExpr
   : ConditionalExpr
-  | UnaryExpr AssignmentOperator AssignmentExpr
+  | UnaryExpr AssignmentOperator AssignmentExpr           { $$ = add3($1,$2,$3);}
   ;
 AssignmentOperator
-  : '='
-  | OP_MUL_ASSIGN
-  | OP_DIV_ASSIGN
-  | OP_MOD_ASSIGN
-  | OP_ADD_ASSIGN
-  | OP_SUB_ASSIGN
-  | OP_SHL_ASSIGN
-  | OP_SHR_ASSIGN 
-  | OP_AND_ASSIGN
-  | OP_XOR_ASSIGN 
-  | OP_OR_ASSIGN
+  : '='  { $$ = "=";}
+  | OP_MUL_ASSIGN                           { $$ = " *= ";}
+  | OP_DIV_ASSIGN                           { $$ = " /= ";}
+  | OP_MOD_ASSIGN                           { $$ = " %= ";}
+  | OP_ADD_ASSIGN                           { $$ = " += ";}
+  | OP_SUB_ASSIGN                           { $$ = " -= ";}
+  | OP_SHL_ASSIGN                           { $$ = " >>= ";}
+  | OP_SHR_ASSIGN                           { $$ = " <<= ";}
+  | OP_AND_ASSIGN                           { $$ = " &= ";}
+  | OP_XOR_ASSIGN                           { $$ = " ^= ";}
+  | OP_OR_ASSIGN                            { $$ = " |= ";}
   ;
 Expr
-  : AssignmentExpr
-  | Expr ',' AssignmentExpr
+  : AssignmentExpr 
+  | Expr ',' AssignmentExpr                 {$$ = add3($1,", ",$3);}
   ;
 ConstantExpr
   : ConditionalExpr
   ;
 Declaration
-  : DeclarationSpecifiers ';'
-  | DeclarationSpecifiers InitDeclaratorList ';'
+  : DeclarationSpecifiers ';'                     {$$ = add($1,";\n");}
+  | DeclarationSpecifiers InitDeclaratorList ';'  {$$ = add3($1,$2,";\n");}
   ;
 DeclarationSpecifiers
   : StorageClassSpecifier
-  | StorageClassSpecifier DeclarationSpecifiers
+  | StorageClassSpecifier DeclarationSpecifiers   {$$ = add3($1," ",$2);}
   | TypeSpecifier
-  | TypeSpecifier DeclarationSpecifiers
+  | TypeSpecifier DeclarationSpecifiers           {$$ = add3($1," ",$2);}
   ;
 InitDeclaratorList
   : InitDeclarator
-  | InitDeclaratorList ',' InitDeclarator
+  | InitDeclaratorList ',' InitDeclarator         {$$ = add3($1,", ",$3);}
   ;
 InitDeclarator
   : Declarator
-  | Declarator '=' Initializer
+  | Declarator '=' Initializer                    {$$ = add3($1," = ",$3);}
   ;
 StorageClassSpecifier
   : KWD_typedef
@@ -176,23 +225,23 @@ StorageClassSpecifier
   | KWD_register
   ;
 TypeSpecifier
-  : KWD_char
-  | KWD_short
-  | KWD_int
-  | KWD_long
-  | KWD_signed
-  | KWD_unsigned
-  | KWD_float
-  | KWD_double
-  | KWD_const
-  | KWD_volatile
-  | KWD_void
-  | StructOrUnionSpecifier
+  : KWD_char                                      { $$ = "char";}
+  | KWD_short                                     { $$ = "short";}
+  | KWD_int                                       { $$ = "int";}
+  | KWD_long                                      { $$ = "long";}
+  | KWD_signed                                    { $$ = "signed";}
+  | KWD_unsigned                                  { $$ = "unsigned";}
+  | KWD_float                                     { $$ = "float";}
+  | KWD_double                                    { $$ = "double";}
+  | KWD_const                                     { $$ = "const";}
+  | KWD_volatile                                  { $$ = "volatile";}
+  | KWD_void                                      { $$ = "void";}
+  | StructOrUnionSpecifier                        
   | EnumSpecifier
-  | TYPE_NAME
+  | TYPE_NAME                                     { $$ = $1 ;}
   ;
 StructOrUnionSpecifier
-  : StructOrUnion IDENT '{' StructDeclarationList '}'
+  : StructOrUnion IDENT '{' StructDeclarationList '}' 
   | StructOrUnion '{' StructDeclarationList '}'
   | StructOrUnion IDENT
   ;
@@ -200,6 +249,7 @@ StructOrUnion
   : KWD_struct
   | KWD_union
   ;
+
 StructDeclarationList
   : StructDeclaration
   | StructDeclarationList StructDeclaration
@@ -229,85 +279,88 @@ Enumerator
   : IDENT
   | IDENT '=' ConstantExpr
   ;
+
+
 Declarator
   : Declarator2
-  | Pointer Declarator2
+  | Pointer Declarator2                         { $$ = add($1,$2);}
   ;
+
 Declarator2
-  : IDENT
-  | '(' Declarator ')'
-  | Declarator2 '[' ']'
-  | Declarator2 '[' ConstantExpr ']'
-  | Declarator2 '(' ')'
-  | Declarator2 '(' ParameterTypeList ')'
-  | Declarator2 '(' ParameterIdentifierList ')'
+  : IDENT                                       { $$ = $1;} 
+  | '(' Declarator ')'                          { $$ = add3("(",$2,")");} 
+  | Declarator2 '[' ']'                         { $$ = add($1,"[]");} 
+  | Declarator2 '[' ConstantExpr ']'            { $$ = add4($1,"[",$3,"]");} 
+  | Declarator2 '(' ')'                         { $$ = add($1,"()");} 
+  | Declarator2 '(' ParameterTypeList ')'       { $$ = add4($1,"(",$3,")");} 
+  | Declarator2 '(' ParameterIdentifierList ')' { $$ = add4($1,"(",$3,")");} 
   ;
 Pointer
-  : '*'
-  | '*' TypeSpecifierList
-  | '*' Pointer
-  | '*' TypeSpecifierList Pointer
+  : '*'                                         { $$ = "*";}
+  | '*' TypeSpecifierList                       { $$ = add("*",$2);}
+  | '*' Pointer                                 { $$ = add("*",$2);}
+  | '*' TypeSpecifierList Pointer               { $$ = add3("*",$2,$3);}
   ;
 TypeSpecifierList
   : TypeSpecifier
-  | TypeSpecifierList TypeSpecifier
+  | TypeSpecifierList TypeSpecifier             { $$ = add($1,$2);}
   ;
 ParameterIdentifierList
   : IdentifierList
-  | IdentifierList ',' OP_ELIPSIS
+  | IdentifierList ',' OP_ELIPSIS               { $$ = add3($1,", ",$3);}
   ;
 IdentifierList
-  : IDENT
-  | IdentifierList ',' IDENT
+  : IDENT                                       { $$ = add("$",$1);}
+  | IdentifierList ',' IDENT                    { $$ = add3($1,", $",$3);}
   ;
 ParameterTypeList
   : ParameterList
-  | ParameterList ',' OP_ELIPSIS
+  | ParameterList ',' OP_ELIPSIS                { $$ = add3($1,", ",$3);}
   ;
 ParameterList
   : ParameterDeclaration
-  | ParameterList ',' ParameterDeclaration
+  | ParameterList ',' ParameterDeclaration      { $$ = add3($1,", ",$3);}
   ;
 ParameterDeclaration
-  : TypeSpecifierList Declarator
+  : TypeSpecifierList Declarator                { $$ = add($1,$2);}
   | TypeName
   ;
 TypeName
   : TypeSpecifierList
-  | TypeSpecifierList AbstractDeclarator
+  | TypeSpecifierList AbstractDeclarator        { $$ = add($1,$2);}
   ;
 AbstractDeclarator
   : Pointer
   | AbstractDeclarator2
-  | Pointer AbstractDeclarator2
+  | Pointer AbstractDeclarator2                 { $$ = add($1,$2);}
   ;
 AbstractDeclarator2
-  : '(' AbstractDeclarator ')'
-  | '[' ']'
-  | '[' ConstantExpr ']'
-  | AbstractDeclarator2 '[' ']'
-  | AbstractDeclarator2 '[' ConstantExpr ']'
-  | '(' ')'
-  | '(' ParameterTypeList ')'
-  | AbstractDeclarator2 '(' ')'
-  | AbstractDeclarator2 '(' ParameterTypeList ')'
+  : '(' AbstractDeclarator ')'                      { $$ = add3("(",$2,")");}
+  | '[' ']'                                         { $$ = "[]";} 
+  | '[' ConstantExpr ']'                            { $$ = add3("[",$2,"]");}
+  | AbstractDeclarator2 '[' ']'                     { $$ = add($1,"[]");}
+  | AbstractDeclarator2 '[' ConstantExpr ']'        { $$ = add4($1,"[",$3,"]");}
+  | '(' ')'                                         { $$ = "()";}
+  | '(' ParameterTypeList ')'                       { $$ = add3("(",$2,")");}
+  | AbstractDeclarator2 '(' ')'                     { $$ = add($1,"()");}  
+  | AbstractDeclarator2 '(' ParameterTypeList ')'   { $$ = add4($1,"(",$3,")");}
   ;
 Initializer
   : AssignmentExpr
-  | '{' InitializerList '}'
-  | '{' InitializerList ',' '}'
+  | '{' InitializerList '}'                         { $$ = add3("{",$2,"}");}
+  | '{' InitializerList ',' '}'                     { $$ = add3("{",$2,",}");}
   ;
 InitializerList
   : Initializer
-  | InitializerList ',' Initializer
+  | InitializerList ',' Initializer                 { $$ = add3($1,", ",$3);}
   ;
 Statement
   : LabeledStatement
   | CompoundStatement
-  | ExpressionStatement
+  | ExpressionStatement  
   | SelectionStatement
   | IterationStatement
-  | JumpStatement
+  | JumpStatement                                   {$$ = "";}
   ;
 LabeledStatement
   : IDENT ':' Statement
@@ -315,22 +368,32 @@ LabeledStatement
   | KWD_default ':' Statement
   ;
 CompoundStatement
-  : '{' '}'
-  | '{' StatementList '}'
-  | '{' DeclarationList '}'
-  | '{' DeclarationList StatementList '}'
+  : '{' '}'                                             {$$ = "{}\n";}
+  | '{' {iLevel++;} StatementList '}'                   {$$ = add4("\n",make_indent("{\n",iLevel-1),$3,make_indent("}\n",iLevel-1)); iLevel--;}   
+  | '{' DeclarationList '}'                             {$$ = add3("{\n",$2,"}\n");}   
+  | '{' DeclarationList StatementList '}'               {$$ = add4("{\n",$2,$3,"}\n");}   
   ;
 DeclarationList
-  : Declaration
-  | DeclarationList Declaration
+  : Declaration 
+  | DeclarationList Declaration                         {$$ = add($1,$2);}
   ;
 StatementList
-  : Statement
-  | StatementList Statement
+  : Statement 
+  {
+    if(strcmp("",$1)){
+      $$ = add(make_indent($1,iLevel),"\n");
+    }
+  }
+  | StatementList Statement 
+  {
+    if(strcmp("",$2)){
+      $$ = add3($1,make_indent($2,iLevel),"\n");
+    }
+  }
   ;
-ExpressionStatement
-  : ';'
-  | Expr ';'
+ExpressionStatement 
+  : ';'                                                  { $$ = ";";}
+  | Expr ';'                                             {$$ = add($1,";");}
   ;
 SelectionStatement
   : KWD_if '(' Expr ')' Statement %prec KWD_else
@@ -338,22 +401,22 @@ SelectionStatement
   | KWD_switch '(' Expr ')' Statement
   ;
 IterationStatement
-  : KWD_while '(' Expr ')' Statement
-  | KWD_do Statement KWD_while '(' Expr ')' ';'
-  | KWD_for '(' ';' ';' ')' Statement
-  | KWD_for '(' ';' ';' Expr ')' Statement
-  | KWD_for '(' ';' Expr ';' ')' Statement
-  | KWD_for '(' ';' Expr ';' Expr ')' Statement
-  | KWD_for '(' Expr ';' ';' ')' Statement
-  | KWD_for '(' Expr ';' ';' Expr ')' Statement
-  | KWD_for '(' Expr ';' Expr ';' ')' Statement
-  | KWD_for '(' Expr ';' Expr ';' Expr ')' Statement
+  : KWD_while '(' Expr ')' Statement                      {$$ = add4("while (",$3,")",$5);}
+  | KWD_do Statement KWD_while '(' Expr ')' ';'           {$$ = add4("do",$2,"while (",add($5,");"));}
+  | KWD_for '(' ';' ';' ')' Statement                     {$$ = add("for (;;) ",$6);}
+  | KWD_for '(' ';' ';' Expr ')' Statement                {$$ = add4("for (;; ",$5,")",$7);}
+  | KWD_for '(' ';' Expr ';' ')' Statement                {$$ = add4("for (; ",$4,";)",$7);}
+  | KWD_for '(' ';' Expr ';' Expr ')' Statement           {$$ = add4("for (; ",$4,";",add3($6,")",$8));}
+  | KWD_for '(' Expr ';' ';' ')' Statement                {$$ = add4("for (",$3,";;)",$7);}
+  | KWD_for '(' Expr ';' ';' Expr ')' Statement           {$$ = add4("for (",$3,";;",add3($6,")",$8));}
+  | KWD_for '(' Expr ';' Expr ';' ')' Statement           {$$ = add4("for (",$3,"; ",add3($5,";)",$8));}
+  | KWD_for '(' Expr ';' Expr ';' Expr ')' Statement      {$$ = add4("for (",$3,"; ",add4($5,"; ",$7,add(")",$9)));}
   ;
 JumpStatement
   : KWD_goto IDENT ';'
   | KWD_continue ';'
   | KWD_break ';'
-  | KWD_return ';'
+  | KWD_return ';' 
   | KWD_return Expr ';'
   ;
 ExternalDefinition
@@ -361,13 +424,19 @@ ExternalDefinition
   | Declaration
   ;
 FunctionDefinition
-  : Declarator FunctionBody
-  | DeclarationSpecifiers Declarator FunctionBody
+  : DeclarationSpecifiers Declarator FunctionBody  
+  {    
+    if(!strcmp($2,"main()"))
+      $$ = add("public static void main(String[] args)\n",$3);
+    else 
+      $$ = add4($1,$2,"\n",$3);
+  }
   ;
 FunctionBody
   : CompoundStatement
-  | DeclarationList CompoundStatement
+  | DeclarationList CompoundStatement {$$ = add($1,$2);}
   ;
+
 Constant : CONST_INT
          | CONST_LONG_INT
          | CONST_UNSIGNED

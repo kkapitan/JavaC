@@ -4,8 +4,9 @@
   int yylex(void);
   #include "y.tab.h"
 %}
-%s Comment
+%s Comment Linecomment
 %%
+<INITIAL>"#include"\ *"<"\ *[a-zA-Z\.0-9]+\ *">"           { return INCLUDE_STATEMENT;}
 <INITIAL>"/*"                                   { BEGIN Comment; }
 <Comment>"*/"                                   { BEGIN INITIAL; }
 <Comment>.|\n                                   { ; }
@@ -164,5 +165,11 @@
                                                   return IDENT; /* typedef -> check type */
                                                 }
 <INITIAL>[ \t\v\n\f]                            { ; }
+
+<INITIAL>"//"                                  {BEGIN Linecomment;}
+<Linecomment>\n                               {BEGIN INITIAL;}
+<Linecomment>.                                {;}
+
+
 %%
 int yywrap(void) { return 1; }
