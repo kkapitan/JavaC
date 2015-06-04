@@ -1,0 +1,60 @@
+/**
+ * @author Anonymous 
+ * @version 0.0003 
+ */
+public class DefaultClass
+{
+    /**
+     * This method is generated from message()
+     */
+    public void $message()
+    {
+        System.out.println("Debug message");
+    }
+    /**
+     * This is an entry point for the application.
+     * @param args the arguments for main function
+     */
+    public static void main(String[] args)
+    {
+        DefaultClass ref = new DefaultClass();
+        int $x = 1, $info = 0;
+
+        if (1)
+        {
+            ref.$message();
+        }
+        else
+        {
+        }
+
+        if (!1)
+        {
+        }
+        else
+        {
+            ref.$message();
+        }
+
+        if (0)
+        {
+
+            if ($x == 1)
+            {
+                ref.$message();
+            }
+            else if ($info == 2)
+            {
+                ref.$message();
+            }
+            else
+            {
+                ref.$message();
+            }
+        }
+        else
+        {
+            ref.$message();
+        }
+    }
+}

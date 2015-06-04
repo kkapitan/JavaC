@@ -1,0 +1,9 @@
+#include <stdio.h>
+
+int main ()
+{
+    puts ("I love Formal Languages and Compilers");
+    puts ("My favourite lecturer is W. Complak");
+    puts ("My favourite tutor is B. Bogacki");
+    puts ("");
+}

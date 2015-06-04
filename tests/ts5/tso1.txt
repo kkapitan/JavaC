@@ -1,0 +1,27 @@
+public class DefaultClass
+{
+    public void $func()
+    {
+        int $j = 0;
+        for (; $j < 10; $j++)
+        {
+            System.out.println("Repeat me");
+        }
+    }
+
+    public void $class()
+    {
+        System.out.println("Repeat me");
+    }
+
+    public static void main(String[] args)
+    {
+        DefaultClass ref = new DefaultClass();
+        int $i;
+        for ($i = 0; $i < 10; $i++)
+        {
+            ref.$class();
+        }
+        ref.$func();
+    }
+}

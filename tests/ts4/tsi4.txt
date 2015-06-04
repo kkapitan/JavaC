@@ -1,0 +1,37 @@
+#include <stdio.h>
+
+int main ()
+{
+    /* This is a comment */
+    int a, b, c;
+    puts("In C language comments can start with \\\" \"//\" "); // A comment
+    puts("but also with /*"); // Comments can include quotations with "
+    int a = 0;	
+			       
+    while ( a ==  4  )
+    {
+        for (i = 5; i < 4; --i) { 
+            while (a == 5) { 
+                int ac;
+		
+		do { 
+                    int b;
+		    do {
+                        puts("uha");
+                    } 
+		    while (a != 2);
+		} while (a < 3);
+	    } 
+	    int c;
+	}
+	
+	puts("aha");
+    }
+																		           
+    for (i = 5;  i < 0;  i++) {  
+        int a; 
+    }
+    
+    int b = 3, c = 5;
+    return -123;
+}

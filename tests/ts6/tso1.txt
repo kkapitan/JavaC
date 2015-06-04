@@ -1,0 +1,58 @@
+/**
+ * @author John Doe
+ * @version 0.001
+ */
+public class DefaultClass
+{
+    /**
+     * This method is generated from func1()
+     * @param $range is a translation of formal parameter range
+     * @return some int value
+     */
+    public int $func1(int $range)
+    {
+        int $j = 0;
+        for (; $j < $range; $j++)
+        {
+            System.out.println("Repeat me");
+        }
+        return $j;
+    }
+    /**
+     * This method is generated from func2()
+     * @param $start is a translation of formal parameter start
+     * @param $range is a translation of formal parameter range
+     * @param $string is a translation of formal parameter string
+     */
+    public void $func2(int $start, int $range, String $string)
+    {
+        int $j = $start;
+        for (; $j < $range; $j++)
+        {
+            System.out.println($string);
+        }
+        return $j;
+    }
+    /**
+     * This method is generated from class()
+     */
+    public void $class()
+    {
+        System.out.println("Repeat me");
+    }
+    /**
+     * This is an entry point for the application.
+     * @param args the arguments for main function
+     */
+    public static void main(String[] args)
+    {
+        DefaultClass ref = new DefaultClass();
+        int $i;
+        for ($i = 0; $i < 10; $i++)
+        {
+            ref.$class();
+        }
+        ref.$func1(10);
+        ref.$func2(10, 5, "Repeat me");
+    }
+}

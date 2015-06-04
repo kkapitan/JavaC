@@ -1,0 +1,8 @@
+#include <stdio.h>
+
+int main ()
+{
+  /*This is a comment
+  puts("In C language comments can start with // ");
+  puts("but also with /*");
+}

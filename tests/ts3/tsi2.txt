@@ -1,0 +1,13 @@
+#include <stdio.h>
+
+int main ()
+{
+    /* This is a comment */
+    puts("In C language comments can start with \"//\" "); // A comment
+    puts("but also with /*"); // Comments can include quotations with "
+    /*
+        This comment includes two quotation marks. The first one is here -> ",
+        while the second is here -> "
+    */
+    return -123;
+}

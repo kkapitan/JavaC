@@ -1,0 +1,28 @@
+#include <stdio.h>
+
+void func ()
+{
+    int j = 0;
+    for (; j < 10; j++)
+    {
+        puts ("Repeat me");
+    }
+}
+
+void class ()
+{
+    puts ("Repeat me");
+}
+
+int main ()
+{
+    int i;
+
+    /* This is a for loop */
+    for (i = 0; i < 10; i++)
+    {
+        class ();
+    }
+
+    func ();
+}

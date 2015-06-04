@@ -1,0 +1,10 @@
+#include <stdio.h>
+
+int main ()
+{
+    puts ("I love Formal Languages and Compilers"); puts ( "a" ) ; puts ("c"   );
+    puts ("My favourite lecturer is W. Complak");
+    puts ("My favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. Bogacki");
+    puts ("");
+    return -123;
+}

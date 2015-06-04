@@ -1,0 +1,46 @@
+/* #autor: Anonymous 
+     #version: 0.0003 
+*/
+#include <stdio.h>
+#define MESSAGE "Debug message"
+#define DEBUG 1
+#define WARNING 0
+#define INFO 2
+
+void message ()
+{
+    puts (MESSAGE);
+}
+
+int main ()
+{
+    int x = 1, info = 0;
+    if (DEBUG)
+    {
+        message();
+    }
+    else
+    {
+        /* do nothing */
+    }
+
+    if (!DEBUG) /* Do nothing */ ;
+    else
+        message();
+
+    if (WARNING) {
+        if (x == DEBUG) {
+            message();
+        }
+        else if (info == INFO) { message();
+	}
+        else
+        {
+             message();
+        }
+    }
+    else
+    {
+        message();
+    }
+}

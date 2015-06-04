@@ -1,0 +1,43 @@
+/*
+  #autor: John Doe
+  #version: 0.001
+*/
+#include <stdio.h>
+
+int func1 (int range)
+{
+    int j = 0;
+    for (; j < range; j++)
+    {
+        puts ("Repeat me");
+    }
+    return j;
+}
+
+void func2 (int start, int range, char *string)
+{
+    int j = start;
+    for (; j < range; j++)
+    {
+        puts (string);
+    }
+    return j;
+}
+void class ()
+{
+    puts ("Repeat me");
+}
+
+int main ()
+{
+    int i;
+
+    /* This is a for loop */
+    for (i = 0; i < 10; i++)
+    {
+        class ();
+    }
+
+    func1 (10);
+    func2 (10, 5, "Repeat me");
+}

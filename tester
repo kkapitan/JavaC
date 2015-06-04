@@ -1,0 +1,90 @@
+#!/bin/sh
+
+root_path=./tests
+#root_path=/home/complak/WDIR/EXP2012/EXP2
+
+compile()
+{
+  printf "\033[33m======= kompilacja parsera =======\033[m\n"
+  flex -l scan.l && bison -y -d gram.y && gcc -pedantic y.tab.c lex.yy.c
+  result=$?
+  if [ $result -ne 0 ]
+    then
+      printf "\033[31m======= Blad kompilacji parsera =======\033[m\n"
+    else
+      printf "\033[32m======= Parser skompilowany poprawnie =======\033[m\n"
+  fi
+}
+
+clean()
+{
+  rm -f lex.yy.c ; rm -f y.tab.c ; rm -f y.tab.h ; rm -f temp.out
+}
+
+testuj_przyrost()
+{
+  compile
+  if [ $result -eq 0 ]
+    then 
+      printf "\n\033[33m======= Testy =======\033[m\n"
+      for x in `seq $1 $2`
+      do
+        printf "\033[33m======= przyrost: $przyrost test: $x ======= :\033[m"
+	./a.out < $3/tsi$x.txt > temp.out
+	diff $3/tso$x.txt temp.out > /dev/null
+	if [ $? -eq 0 ]
+	  then printf "\033[32mOK\033[m\n"
+	  else 
+            diff -w $3/tso$x.txt temp.out > /dev/null
+            if [ $? -ne 0 ] 
+	      then printf "\033[31mBlad\033[m\n";
+	      else printf "\033[31mMozliwy blad formatowania\033[m\n"
+	    fi
+	    printf "\n\033[33m======= testowane wejscie =======\033[m\n"
+	    cat $3/tsi$x.txt
+	    printf "\n\033[32m======= uzyskane wyjscie =======\033[m\n"
+	    cat temp.out
+	    printf "\n\033[31m======= oczekiwane wyjscie =======\033[m\n"
+	    cat $3/tso$x.txt
+	    printf "\n\033[32m======= koniec raportu z testowania =======\033[m\n"
+	    clean
+	    break
+         fi
+      done
+    fi
+}
+
+# start processing
+
+clear
+przyrost=$1
+case $1 in
+1)
+   testuj_przyrost 1 5 "$root_path/ts1"
+   przyrost=1
+   ;;
+2)
+   testuj_przyrost 1 3 "$root_path/ts2"
+   ;;
+3)
+   testuj_przyrost 1 5 "$root_path/ts3"
+   ;;
+4)
+   testuj_przyrost 1 4 "$root_path/ts4"
+   ;;
+5)
+   testuj_przyrost 1 2 "$root_path/ts5"
+   ;;
+6)
+   testuj_przyrost 1 1 "$root_path/ts6"
+   ;;
+7)
+   testuj_przyrost 1 1 "$root_path/ts7"
+   ;;
+8)
+   testuj_przyrost 1 1 "$root_path/ts8"
+   ;;
+*)
+   printf "\033[31m======= w wywolaniu nalezy podac poprawny numer przyrostu  <1, 8>=======\033[m\n"
+   ;;
+esac

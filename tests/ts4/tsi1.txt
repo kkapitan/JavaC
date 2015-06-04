@@ -1,0 +1,25 @@
+#include <stdio.h>
+
+int main () {
+    int i;
+    int j = 0, k = 0;
+
+
+    /* This is a for loop */
+    for (i = 0; i < 10; i++) {
+        puts("Repeat me ten times");
+    }
+
+    /* This is a while loop */
+    while (j < 10) {
+        puts("Repeat me ten times");
+        j++;
+    }
+
+    /* This is a while loop as well */
+    do {
+        puts("Repeat me ten times");
+        k++;
+    }
+    while (k < 10);
+}

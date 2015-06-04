@@ -1,0 +1,12 @@
+public class DefaultClass
+{
+    public static void main(String[] args)
+    {
+        System.out.println("I love Formal Languages and Compilers");
+        System.out.println("a");
+        System.out.println("c");
+        System.out.println("My favourite lecturer is W. Complak");
+        System.out.println("My favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. BogackiMy favourite tutor is B. Bogacki");
+        System.out.println("");
+    }
+}

@@ -1,0 +1,37 @@
+public class DefaultClass
+{
+    public static void main(String[] args)
+    {
+        int $a, $b, $c;
+        System.out.println("In C language comments can start with \\\" \"//\" ");
+        System.out.println("but also with /*");
+        int $a = 0;
+        while ($a == 4)
+        {
+            for ($i = 5; $i < 4; --$i)
+            {
+                while ($a == 5)
+                {
+                    int $ac;
+                    do
+                    {
+                        int $b;
+                        do
+                        {
+                            System.out.println("uha");
+                        }
+                        while ($a != 2);
+                    }
+                    while ($a < 3);
+                }
+                int $c;
+            }
+            System.out.println("aha");
+        }
+        for ($i = 5; $i < 0; $i++)
+        {
+            int $a;
+        }
+        int $b = 3, $c = 5;
+    }
+}

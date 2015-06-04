@@ -1,0 +1,47 @@
+/*
+  #autor: Jane Doe
+  #version: 0.002
+*/
+#include <stdio.h>
+#define START_VAL 0
+#define RETURN_STMT return
+#define MESSAGE "Repeat me"
+
+int func1 (int range)
+{
+    int j = START_VAL;
+    for (; j < range; j++)
+    {
+        puts (MESSAGE);
+    }
+    RETURN_STMT j;
+}
+
+void func2 (int range, int start, char *string)
+{
+    int j = start;
+    for (; j < range; j++)
+    {
+        puts (string);
+    }
+    RETURN_STMT j;
+}
+
+void class ()
+{
+    puts (MESSAGE);
+}
+
+int main ()
+{
+    int i;
+
+    /* This is a for loop */
+    for (i = START_VAL; i < 10; i++)
+    {
+        class ();
+    }
+
+    func1 (10);
+    func2 (10, 5, MESSAGE);
+}

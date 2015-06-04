@@ -1,0 +1,8 @@
+public class DefaultClass
+{
+    public static void main(String[] args)
+    {
+        System.out.println("In C language comments can start with // ");
+        System.out.println("but also with /*");
+    }
+}
