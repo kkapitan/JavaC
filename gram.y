@@ -61,7 +61,7 @@ ShiftExpr RelationalExpr EqualityExpr AndExpr ExclusiveOrExpr InclusiveOrExpr Lo
 Declarator Declarator2 Declaration DeclarationSpecifiers InitDeclarator IdentifierList FunctionDefinition FunctionBody TypeSpecifier TYPE_NAME StorageClassSpecifier
 OP_PTR OP_INC OP_DEC KWD_sizeof OP_GE TypeName UnaryOperator OP_LE OP_NE OP_SHL OP_SHR OP_SHL_ASSIGN OP_SHR_ASSIGN OP_EQ OP_AND OP_OR AssignmentOperator InitDeclaratorList
 Pointer TypeSpecifierList ParameterIdentifierList ParameterTypeList ParameterDeclaration AbstractDeclarator2 AbstractDeclarator ParameterList Initializer ConstantExpr OP_ELIPSIS
-InitializerList IterationStatement
+InitializerList IterationStatement CompundStatementClosure
 %%
 
 
@@ -84,7 +84,7 @@ PrimaryExpr
   : IDENT  {   
       if(!strcmp("puts",$1)) 
         $$ = "System.out.println"; 
-      else $$ = $1; 
+      else $$ = add("$",$1); 
     }
   | Constant
   | '(' Expr ')'
@@ -96,8 +96,8 @@ PostfixExpr
   | PostfixExpr '(' ArgumentExprList ')'    { $$ = add4($1,"(",$3,")");}
   | PostfixExpr '.' IDENT                   { $$ = add3($1,".",$3);}
   | PostfixExpr OP_PTR IDENT                { $$ = add3($1,$2,$3);}
-  | PostfixExpr OP_INC                      { $$ = add3("$",$1,"++");}
-  | PostfixExpr OP_DEC                      { $$ = add3("$",$1,"--");}
+  | PostfixExpr OP_INC                      { $$ = add($1,"++");}
+  | PostfixExpr OP_DEC                      { $$ = add($1,"--");}
   ;
 ArgumentExprList
   : AssignmentExpr                          
@@ -180,7 +180,7 @@ AssignmentExpr
   | UnaryExpr AssignmentOperator AssignmentExpr           { $$ = add3($1,$2,$3);}
   ;
 AssignmentOperator
-  : '='  { $$ = "=";}
+  : '='  { $$ = " = ";}
   | OP_MUL_ASSIGN                           { $$ = " *= ";}
   | OP_DIV_ASSIGN                           { $$ = " /= ";}
   | OP_MOD_ASSIGN                           { $$ = " %= ";}
@@ -210,12 +210,12 @@ DeclarationSpecifiers
   | TypeSpecifier DeclarationSpecifiers           {$$ = add3($1," ",$2);}
   ;
 InitDeclaratorList
-  : InitDeclarator
-  | InitDeclaratorList ',' InitDeclarator         {$$ = add3($1,", ",$3);}
+  : InitDeclarator                                  
+  | InitDeclaratorList ',' InitDeclarator         {$$ = add3($1,",",$3);}
   ;
 InitDeclarator
-  : Declarator
-  | Declarator '=' Initializer                    {$$ = add3($1," = ",$3);}
+  : Declarator                                    {$$ = add(" $",$1);}
+  | Declarator '=' Initializer                    {$$ = add4(" $",$1," = ",$3);}
   ;
 StorageClassSpecifier
   : KWD_typedef
@@ -351,7 +351,7 @@ Initializer
   | '{' InitializerList ',' '}'                     { $$ = add3("{",$2,",}");}
   ;
 InitializerList
-  : Initializer
+  : Initializer                                     
   | InitializerList ',' Initializer                 { $$ = add3($1,", ",$3);}
   ;
 Statement
@@ -367,33 +367,38 @@ LabeledStatement
   | KWD_case ConstantExpr ':' Statement
   | KWD_default ':' Statement
   ;
+
+CompundStatementClosure 
+  : '}'                                             {$$ = "{}";}
+  | StatementList '}'                               {$$ = add4("\n",make_indent("{\n",iLevel-1),$1,make_indent("}",iLevel-1));}   
+  | DeclarationList '}'                             {$$ = add4("\n",make_indent("{\n",iLevel-1),$1,make_indent("}",iLevel-1));}   
+  | DeclarationList StatementList '}'               {$$ = add4("\n",make_indent("{\n",iLevel-1),add($1,$2),make_indent("}",iLevel-1));}   
+  ;
+
 CompoundStatement
-  : '{' '}'                                             {$$ = "{}\n";}
-  | '{' {iLevel++;} StatementList '}'                   {$$ = add4("\n",make_indent("{\n",iLevel-1),$3,make_indent("}\n",iLevel-1)); iLevel--;}   
-  | '{' DeclarationList '}'                             {$$ = add3("{\n",$2,"}\n");}   
-  | '{' DeclarationList StatementList '}'               {$$ = add4("{\n",$2,$3,"}\n");}   
-  ;
+  : '{' {iLevel++;} CompundStatementClosure             {$$ = add($3,"\n");iLevel--;}
+
+
 DeclarationList
-  : Declaration 
-  | DeclarationList Declaration                         {$$ = add($1,$2);}
-  ;
+  : Declaration                                         {$$ = make_indent($1,iLevel);}
+  | DeclarationList Declaration                         {$$ = add($1,make_indent($2,iLevel));}
 StatementList
   : Statement 
   {
     if(strcmp("",$1)){
-      $$ = add(make_indent($1,iLevel),"\n");
+      $$ = make_indent($1,iLevel);
     }
   }
   | StatementList Statement 
   {
     if(strcmp("",$2)){
-      $$ = add3($1,make_indent($2,iLevel),"\n");
+      $$ = add($1,make_indent($2,iLevel));
     }
   }
   ;
 ExpressionStatement 
-  : ';'                                                  { $$ = ";";}
-  | Expr ';'                                             {$$ = add($1,";");}
+  : ';'                                                  { $$ = ";\n";}
+  | Expr ';'                                             {$$ = add($1,";\n");}
   ;
 SelectionStatement
   : KWD_if '(' Expr ')' Statement %prec KWD_else
@@ -402,7 +407,7 @@ SelectionStatement
   ;
 IterationStatement
   : KWD_while '(' Expr ')' Statement                      {$$ = add4("while (",$3,")",$5);}
-  | KWD_do Statement KWD_while '(' Expr ')' ';'           {$$ = add4("do",$2,"while (",add($5,");"));}
+  | KWD_do Statement KWD_while '(' Expr ')' ';'           {$$ = add4("do",$2,make_indent(add3("while (",$5,");"),iLevel),"\n");}
   | KWD_for '(' ';' ';' ')' Statement                     {$$ = add("for (;;) ",$6);}
   | KWD_for '(' ';' ';' Expr ')' Statement                {$$ = add4("for (;; ",$5,")",$7);}
   | KWD_for '(' ';' Expr ';' ')' Statement                {$$ = add4("for (; ",$4,";)",$7);}
@@ -427,7 +432,7 @@ FunctionDefinition
   : DeclarationSpecifiers Declarator FunctionBody  
   {    
     if(!strcmp($2,"main()"))
-      $$ = add("public static void main(String[] args)\n",$3);
+      $$ = add("public static void main(String[] args)",$3);
     else 
       $$ = add4($1,$2,"\n",$3);
   }
