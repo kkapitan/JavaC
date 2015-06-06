@@ -4,12 +4,46 @@
   int yylex(void);
   #include "y.tab.h"
 %}
-%s Comment Linecomment
+
+  int keys_n=0;
+  int values_n=0;
+  char* define_keys[1000];
+  char* define_values[1000];
+  void add_key(char * key)
+  {
+    define_keys[keys_n]=key;
+    keys_n++;
+  }
+  void add_value(char * val)
+  {
+    define_values[values_n]=val;
+    values_n++;
+  }
+
+
+%s COMMENT LINECOMMENT DEFINE DEFINED_KEY DEFINED_VALUE
 %%
-<INITIAL>"#include"\ *"<"\ *[a-zA-Z\.0-9]+\ *">"           { return INCLUDE_STATEMENT;}
-<INITIAL>"/*"                                   { BEGIN Comment; }
-<Comment>"*/"                                   { BEGIN INITIAL; }
-<Comment>.|\n                                   { ; }
+<INITIAL>"#include"\ *"<"\ *[a-zA-Z\.0-9]+\ *">" { return INCLUDE_STATEMENT;}
+<INITIAL>"/*"                                   { BEGIN COMMENT; }
+<COMMENT>"*/"                                   { BEGIN INITIAL; }
+<COMMENT>#autor:
+<COMMENT>"#autor:"[ \t][^\n]*\n                 {
+                                                  yylval.text = strdup(yytext);
+                                                  return AUTHOR;
+                                                }
+<COMMENT>"#version:"[ \t][^\n]*\n               {
+                                                  yylval.text = strdup(yytext);
+                                                  return VERSION;
+                                                }
+<COMMENT>.|[ \n\t\r\f\v]                        {;}
+
+
+<INITIAL>"#define "                             { BEGIN DEFINE; }
+<DEFINE>[a-zA-Z_][a-zA-Z_0-9]*                  { BEGIN DEFINED_KEY;add_key(strdup(yytext));} 
+<DEFINED_KEY>\"[^\n]+\"|[^\n]+                  { BEGIN DEFINED_VALUE;add_value(strdup(yytext+1));}
+<DEFINED_VALUE>\n                               { BEGIN INITIAL;}
+
+
 <INITIAL>auto                                   { return KWD_auto; }
 <INITIAL>break                                  { return KWD_break; }
 <INITIAL>case                                   { return KWD_case; }
@@ -160,15 +194,46 @@
                                                   yylval.text = strdup(yytext);
                                                   return CONST_CHAR;
                                                 }
+
+
+<INITIAL>[a-zA-Z_][a-zA-Z_0-9]*                 {
+
+                                                  int i;
+                                                  char * ident=strdup(yytext);
+                                                  int unp=0;
+                                                  for(i=0;i<keys_n;i++)
+                                                  {
+                                                    if(strcmp(ident,define_keys[i])==0)
+                                                    {
+                                                      int j;
+                                                      for(j=strlen(define_values[i])-1;j>=0;--j)
+                                                      {
+                                                        char c=(int)define_values[i][j];
+                                                        unput(c);
+
+                                                      }
+                                                      unp=1;
+                                                      break;
+                                                    }
+                                                  }
+                                                  if(!unp)
+                                                  {
+                                                    yylval.text = strdup(yytext);
+                                                    return IDENT; /* typedef -> check type */
+                                                  } 
+                                                  
+                                                }
+
+
 <INITIAL>[a-zA-Z_][a-zA-Z_0-9]*                 {
                                                   yylval.text = strdup(yytext);
                                                   return IDENT; /* typedef -> check type */
                                                 }
 <INITIAL>[ \t\v\n\f]                            { ; }
 
-<INITIAL>"//"                                  {BEGIN Linecomment;}
-<Linecomment>\n                               {BEGIN INITIAL;}
-<Linecomment>.                                {;}
+<INITIAL>"//"                                  {BEGIN LINECOMMENT;}
+<LINECOMMENT>\n                               {BEGIN INITIAL;}
+<LINECOMMENT>.                                {;}
 
 
 %%
